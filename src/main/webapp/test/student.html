@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>学生信息详情</title>
+    <style>
+        /* 居中样式 */
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* 添加按钮样式 */
+        .btn {
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-delete {
+            background-color: #ff5b5b;
+            color: white;
+        }
+
+        .btn-edit {
+            background-color: #4caf50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<h1>学生信息详情</h1>
+<div>
+    <p>学生ID: <span id="studentId"></span></p>
+    <p>姓名: <span id="studentName"></span></p>
+    <p>性别: <span id="studentGender"></span></p>
+    <p>年龄: <span id="studentAge"></span></p>
+    <p>创建时间: <span id="studentCreateTime"></span></p>
+</div>
+
+<!-- 添加删除按钮 -->
+<div>
+    <button class="btn btn-delete" onclick="deleteStudent()">删除</button>
+    <button class="btn btn-edit">修改</button>
+</div>
+
+<script>
+    // 获取URL中的查询参数（学生ID）
+    const urlParams = new URLSearchParams(window.location.search);
+    const studentId = urlParams.get('id');
+
+    // 根据学生ID发送请求，获取学生信息并显示在页面中
+    fetch(`/SSMTest_war/stu/${studentId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.code === 20041) {
+                const student = data.data;
+                document.getElementById('studentId').innerText = student.id;
+                document.getElementById('studentName').innerText = student.name;
+                document.getElementById('studentGender').innerText = student.gender === 1 ? '男' : '女';
+                document.getElementById('studentAge').innerText = student.age;
+                document.getElementById('studentCreateTime').innerText = new Date(student.createtime).toLocaleDateString();
+            } else {
+                // 处理请求失败的情况
+                const errorMsg = document.createElement('p');
+                errorMsg.innerText = data.msg;
+                document.body.appendChild(errorMsg);
+            }
+        })
+        .catch(error => {
+            // 处理请求出错的情况
+            console.error('Error fetching data:', error);
+            const errorMsg = document.createElement('p');
+            errorMsg.innerText = '请求出错，请稍后重试';
+            document.body.appendChild(errorMsg);
+        });
+
+    // 删除按钮点击事件处理函数
+    function deleteStudent() {
+        fetch(`/SSMTest_war/stu/${studentId}`, { method: 'DELETE' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 20021) {
+                    // 学生删除成功，跳转回学生列表页面
+                    window.location.href = '/SSMTest_war/test/stuList.html';
+                } else {
+                    // 处理删除失败的情况
+                    console.error('Error deleting student:', data.msg);
+                    alert('删除学生失败，请稍后重试。');
+                }
+            })
+            .catch(error => {
+                // 处理请求出错的情况
+                console.error('Error fetching data:', error);
+                alert('请求出错，请稍后重试。');
+            });
+    }
+</script>
+</body>
+</html>

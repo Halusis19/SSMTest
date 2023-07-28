@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>学生信息列表</title>
+    <style>
+      body {
+        margin: 0 auto;
+      }
+  
+      /* 修改标题样式，使标题居中对齐 */
+      h1 {
+        text-align: center;
+      }
+  
+      /* 表格样式 */
+      table {
+        border-collapse: collapse;
+        width: auto; /* 设置表格宽度为 "auto"，根据内容自动调整宽度 */
+        margin: 0 auto;
+      }
+  
+      th, td {
+        border: 1px solid #dddddd;
+        padding-left: 40px; /* 设置每个单元格的内边距为 8 像素 */
+        padding-right: 40px; /* 设置每个单元格的内边距为 8 像素 */
+        padding-top: 20px; /* 设置每个单元格的内边距为 8 像素 */
+        padding-bottom: 20px; /* 设置每个单元格的内边距为 8 像素 */
+        text-align: left;
+      }
+  
+      th {
+        background-color: #f2f2f2;
+      }
+  
+      /* 按钮样式 */
+      .btn {
+        padding: 5px 10px;
+        cursor: pointer;
+      }
+  
+      .btn-delete {
+        background-color: #ff5b5b;
+        color: white;
+      }
+  
+      .btn-edit {
+        background-color: #4caf50;
+        color: white;
+      }
+    </style>
+  </head>
+<body>
+<h1>学生信息列表</h1>
+<div align="center">
+  <input type="text" id="searchInput" placeholder="请输入学生ID">
+  <button onclick="openStudentPage()">搜索</button>
+</div>
+<table id="stuListTable">
+  <thead>
+  <tr>
+    <th>学生ID</th>
+    <th>姓名</th>
+    <th>性别</th>
+    <th>年龄</th>
+    <th>创建时间</th>
+    <th>操作</th>
+  </tr>
+  </thead>
+  <tbody>
+  <!-- 这里用于显示学生信息列表 -->
+  </tbody>
+</table>
+
+<script>
+  function showStudents() {
+    fetch('/SSMTest_war/stu')
+      .then(response => response.json())
+      .then(data => {
+        if (data.code === 20041) {
+          const stuList = data.data;
+          const stuListTableBody = document.querySelector('#stuListTable tbody');
+          stuListTableBody.innerHTML = '';
+
+          stuList.forEach(stu => {
+            const stuRow = document.createElement('tr');
+            stuRow.innerHTML = `
+              <td>${stu.id}</td>
+              <td>${stu.name}</td>
+              <td>${stu.gender === 1 ? '男' : '女'}</td>
+              <td>${stu.age}</td>
+              <td>${new Date(stu.createtime).toLocaleDateString()}</td>
+              <td>
+                <button class="btn btn-delete">删除</button>
+                <button class="btn btn-edit" onclick="openUpdatePage(${stu.id})">修改</button>
+              </td>
+            `;
+            stuListTableBody.appendChild(stuRow);
+          });
+
+          // 将事件监听器的附加代码移动到这里
+          const deleteButtons = document.querySelectorAll('.btn-delete');
+          deleteButtons.forEach(button => {
+            button.addEventListener('click', function () {
+              const studentId = this.parentNode.parentNode.cells[0].innerText;
+              deleteStudent(studentId);
+            });
+          });
+        } else {
+          // 处理请求失败的情况
+          const errorMsg = document.createElement('p');
+          errorMsg.innerText = data.msg;
+          const stuListContainer = document.getElementById('stuListTable');
+          stuListContainer.appendChild(errorMsg);
+        }
+      })
+      .catch(error => {
+        // 处理请求出错的情况
+        console.error('Error fetching data:', error);
+        const errorMsg = document.createElement('p');
+        errorMsg.innerText = '请求出错，请稍后重试';
+        const stuListContainer = document.getElementById('stuListTable');
+        stuListContainer.appendChild(errorMsg);
+      });
+  }
+
+  function deleteStudent(id) {
+    fetch(`/SSMTest_war/stu/${id}`, { method: 'DELETE' })
+      .then(response => response.json())
+      .then(data => {
+        if (data.code === 20021) {
+          // 学生删除成功，刷新学生信息列表
+          showStudents();
+        } else {
+          // 处理删除失败的情况
+          console.error('Error deleting student:', data.msg);
+          alert('删除学生失败，请稍后重试。');
+        }
+      })
+      .catch(error => {
+        // 处理请求出错的情况
+        console.error('Error fetching data:', error);
+        alert('请求出错，请稍后重试。');
+      });
+  }
+  function openStudentPage() {
+    const searchInput = document.getElementById('searchInput').value;
+    if (searchInput.trim() === '') {
+      // 如果搜索框为空，则不进行搜索
+      return;
+    }
+
+    // 构建新的URL，将学生ID作为查询参数
+    const studentPageURL = 'student.html?id=' + encodeURIComponent(searchInput);
+
+    // 在新页面中打开该URL
+    window.open(studentPageURL, '_blank');
+  }
+  function openUpdatePage(studentId) {
+    // 构建新的URL，将学生ID作为查询参数传递给updateStudent.html页面
+    const updatePageURL = `updateStudent.html?id=${encodeURIComponent(studentId)}`;
+
+    // 在当前页面打开updateStudent.html页面
+    window.location.href = updatePageURL;
+  }
+
+  // 页面加载完成后执行showStudents()函数，显示学生信息
+  window.onload = showStudents;
+
+</script>
+</body>
+</html>
